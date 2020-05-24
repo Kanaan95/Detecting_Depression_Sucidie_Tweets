@@ -66,7 +66,7 @@ def checkPolarity(text):
     return tweet.sentiment.polarity
 
 # CHECK IF TWEET CONTAINS SIGNS OF DEPRESSION/SUICIDE IDEATION
-def isSafe(tweet):
+def predictions(tweet):
 
     # In Stream, we have filtered the tweets that contains extended tweets, but it does not always provide extended tweets
     if "extended_tweets" in tweet:
@@ -76,7 +76,7 @@ def isSafe(tweet):
                     text = tweet["extended_tweets"]['full_text']
 
                 else: 
-                    return True
+                    return 0
     
     elif "text" in tweet:
         
@@ -96,7 +96,7 @@ def isSafe(tweet):
 
     # If polarity is positive and/or tweet is retweeted, we move on
     else:
-        return True
+        return 0
 
     # Transform text into sequences for predictions
     sent_token = TK.texts_to_sequences([text])
@@ -111,13 +111,17 @@ def isSafe(tweet):
     print(text)
     print(f"Preds: {preds}")
     print(f"Index: {index}")
+
+    # return preds
     
     # 1: Safe
     # 0: Depression/Suicide Ideation
     if index == 1: 
-        return True
-    else: 
-        return False
+        return 0
+    else:
+        confidence = int(preds[0][0] * 100)
+        print(f"Confidence: {confidence}")
+        return confidence
 
 # Check user previous tweets if his tweet has been classified as depression/suicide ideadion 
 def checkUserHistory(user):
@@ -199,8 +203,11 @@ class TwitterListener(StreamListener):
         try:
             # print(data)
             d = json.loads(data)
+
+            conf = predictions(d)
             
-            if not isSafe(d):
+            if conf != 0:
+                d.update({'confidence': conf })
                 self.collection.insert_one(d)
                 print("Added new record!\n")
             return True
@@ -222,7 +229,7 @@ class TwitterStreamer():
 
     def start_stream(self, stream, track):
         try:
-            stream.filter(track = track, languages=['en'], tweet_mode='extended')
+            stream.filter(track = track, languages=['en'])
 
         except KeyboardInterrupt:
             sys.exit("Exited program with CTRL+C")

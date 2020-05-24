@@ -217,11 +217,12 @@ class TwitterListener(StreamListener):
         print(status)
 
 
+# # # # TWITTER STREAMER # # # #
 class TwitterStreamer():
 
     def start_stream(self, stream, track):
         try:
-            stream.filter(track = track, languages=['en'])
+            stream.filter(track = track, languages=['en'], tweet_mode='extended')
 
         except KeyboardInterrupt:
             sys.exit("Exited program with CTRL+C")
@@ -236,7 +237,6 @@ class TwitterStreamer():
             print("Except: \n", e)
             stream.disconnect()
             self.start_stream(stream, track)
-
 
 
 if __name__ == "__main__":
@@ -275,7 +275,7 @@ if __name__ == "__main__":
         streamer = TwitterStreamer()
 
         # filter
-        filter = ["depressed", "suicide"]
+        filter = ["depressed", "suicide", "depression", "kill myself"]
         streamer.start_stream(twitter_stream, filter)
         
     except Exception as e:
